@@ -1,19 +1,18 @@
-FROM node:16-alpine
-# WORKDIR /
-# COPY package*.json ./
+FROM node:19-alpine3.16 AS node
+FROM ghcr.io/osgeo/gdal:alpine-normal-latest
+
+COPY --from=node /usr/lib /usr/lib
+COPY --from=node /usr/local/share /usr/local/share
+COPY --from=node /usr/local/lib /usr/local/lib
+COPY --from=node /usr/local/include /usr/local/include
+COPY --from=node /usr/local/bin /usr/local/bin
+
 COPY . . 
+
 RUN npm -g install
-RUN npm install -g ogre
-
-# Make ogr2ogr from src-->
-RUN apk add --update wget python3 python3-dev curl cmake doxygen  make gcc g++ musl-dev binutils autoconf automake libtool pkgconfig check-dev file patch linux-headers proj proj-dev
-RUN wget https://github.com/OSGeo/gdal/releases/download/v3.6.2/gdal-3.6.2.tar.gz
-RUN tar xzf gdal-3.6.2.tar.gz
-RUN cd gdal-3.6.2 && cmake . &&  cmake --build . && cmake --build . --target install
-
-# get ogr2ogr from pkg-->
-# RUN apk add --update wget gdal
-
+RUN npm install -g ts-node
+RUN npm install -g typescript
+RUN npm i --save-dev @types/node
 
 # COPY . .    
 EXPOSE 3000
