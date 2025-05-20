@@ -33,7 +33,30 @@ Options:
  -v, --version   version number
  -t, --timeout   timeout before ogre kills a job in ms (default 15000)
  -l, --limit     byte limit for uploads (default 50000000)
+
+Additional POST parameters for /convert:
+ dialect        SQL dialect (e.g., 'sqlite')
+ sql            SQL query for filtering data
+ simplify       Value for simplifying geometries (e.g., '0.1')
+ configDxfEncoding  Set to any value to enable DXF_ENCODING=UTF-8 config
+ writeBbox      Set to any value to enable WRITE_BBOX=YES
 ```
+
+## DXF Conversion
+
+To convert DXF files with SQL queries, you can use the additional parameters:
+
+```sh
+curl -F "upload=@your_file.dxf" \
+     -F "dialect=sqlite" \
+     -F "sql=SELECT Layer, EntityHandle, Text, OGR_STYLE, * FROM entities" \
+     -F "simplify=0.1" \
+     -F "configDxfEncoding=true" \
+     -F "writeBbox=true" \
+     http://localhost:3000/convert > output.geojson
+```
+
+See the [examples directory](/examples) for more usage examples.
 
 [1]: https://gdal.org/download.html
 [2]: https://github.com/wavded/ogr2ogr

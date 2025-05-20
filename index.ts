@@ -25,6 +25,11 @@ interface UploadOpts {
   forcePlainText: string
   forceDownload: string
   callback: string
+  dialect: string
+  sql: string
+  simplify: string
+  configDxfEncoding: string
+  writeBbox: string
 }
 
 const TMP_DIR = tmpdir()
@@ -81,6 +86,11 @@ export class Ogre {
       forcePlainText,
       forceDownload,
       callback,
+      dialect,
+      sql,
+      simplify,
+      configDxfEncoding,
+      writeBbox,
     }: UploadOpts = await c.req.parseBody()
     if (!upload) {
       return c.json({error: true, msg: "No file provided"}, 400)
@@ -95,6 +105,19 @@ export class Ogre {
     if (targetSrs) opts.options.push("-t_srs", targetSrs)
     if (sourceSrs) opts.options.push("-s_srs", sourceSrs)
     if (rfc7946 != null) opts.options.push("-lco", "RFC7946=YES")
+    
+    // Add support for SQL dialect and query
+    if (dialect) opts.options.push("-dialect", dialect)
+    if (sql) opts.options.push("-sql", sql)
+    
+    // Add simplify option (e.g. for DXF with curves)
+    if (simplify) opts.options.push("-simplify", simplify)
+    
+    // Add DXF encoding configuration
+    if (configDxfEncoding) opts.options.push("--config", "DXF_ENCODING", "UTF-8")
+    
+    // Add write bbox option
+    if (writeBbox) opts.options.push("-lco", "WRITE_BBOX=YES")
 
     c.header(
       "content-type",
