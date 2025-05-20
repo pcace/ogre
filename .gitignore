@@ -1,10 +1,8 @@
 node_modules
-npm_debug.log
 ogr_*
 .DS_Store
 coverage
-.nyc_output
-yarn.lock
 dist
 pnpm-lock.yaml
 *.tar
+package-lock.json

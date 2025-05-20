@@ -1,6 +1,6 @@
 {
   "name": "ogre",
-  "version": "3.0.4",
+  "version": "5.0.3",
   "description": "ogr2ogr web client",
   "keywords": [
     "ogr2ogr",
@@ -14,49 +14,52 @@
   },
   "homepage": "http://github.com/wavded/ogre",
   "bin": {
-    "ogre": "dist/cli.js"
+    "ogre": "dist/cli.cjs"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
-    "prepublishOnly": "rm -rf dist && tsc && cp -rf public dist",
-    "build": "rm -rf dist && tsc && cp -rf public dist",
-    "start": "ts-node cli.ts",
-    "test": "nyc ts-node node_modules/.bin/blue-tape index_test.ts",
-    "lint": "tsc --noEmit && eslint --ext ts .",
+    "prepublishOnly": "pnpm build",
+    "build": "tsup-node cli.ts",
+    "start": "pnpm build && dist/cli.cjs",
+    "test": "vitest run --silent",
+    "lint": "tsc --noEmit && eslint .",
     "fmt": "prettier --write .",
     "fmt-check": "prettier --check ."
   },
+  "tsup": {
+    "loader": {
+      ".html": "text"
+    },
+    "clean": true
+  },
   "dependencies": {
-    "body-parser": "^1.9.2",
-    "connect-multiparty": "^2.2.0",
-    "cors": "^2.8.5",
-    "express": "^4.10.2",
-    "express-promise-router": "^4.1.0",
-    "multer": "^1.4.2",
-    "ogr2ogr": "^4.0.0"
+    "@hono/node-server": "^1.14.1",
+    "hono": "^4.7.7",
+    "ogr2ogr": "6.0.0"
   },
   "devDependencies": {
-    "@types/blue-tape": "^0.1.33",
-    "@types/body-parser": "^1.19.1",
-    "@types/cors": "^2.8.12",
-    "@types/express": "^4.17.13",
-    "@types/express-promise-router": "^3.0.0",
-    "@types/multer": "^1.4.7",
-    "@types/supertest": "^2.0.11",
-    "@typescript-eslint/eslint-plugin": "^5.9.0",
-    "@typescript-eslint/parser": "^5.9.0",
-    "blue-tape": "^1.0.0",
-    "eslint": "^8.6.0",
-    "eslint-config-prettier": "^8.3.0",
-    "nyc": "^15.1.0",
-    "prettier": "^2.0.5",
-    "prettier-plugin-organize-imports": "^2.3.3",
-    "supertest": "^6.1.3",
-    "ts-node": "^10.1.0",
-    "typescript": "^4.3.5"
+    "@eslint/js": "^9.24.0",
+    "@types/archiver": "^6.0.3",
+    "@types/node": "^22.14.1",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^9.24.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "^3.5.3",
+    "prettier-plugin-organize-imports": "^4.1.0",
+    "supertest": "^7.1.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vitest": "^3.1.1"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
