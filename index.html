@@ -97,12 +97,77 @@
                     />
                   </div>
                 </div>
+                <!-- SQL-related fields for advanced operations -->
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="dialect"
+                    >SQL Dialect:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="dialect"
+                      name="dialect"
+                      placeholder="e.g. sqlite"
+                    />
+                    <p class="help-block">
+                      SQL dialect for filtering data (e.g., 'sqlite')
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="sql"
+                    >SQL Query:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="sql"
+                      name="sql"
+                      placeholder="e.g. SELECT Layer, EntityHandle, Text, OGR_STYLE, * FROM entities"
+                    />
+                    <p class="help-block">
+                      SQL query for filtering data
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="simplify"
+                    >Simplify:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="simplify"
+                      name="simplify"
+                      placeholder="e.g. 0.1"
+                    />
+                    <p class="help-block">
+                      Value for simplifying geometries (useful for curves in DXF files)
+                    </p>
+                  </div>
+                </div>
                 <div class="form-group">
                   <div class="col-sm-9 col-sm-offset-3">
                     <div class="checkbox">
                       <label>
                         <input name="rfc7946" type="checkbox" />
                         Create Mapbox-compatible file (RFC7946)
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-sm-9 col-sm-offset-3">
+                    <div class="checkbox">
+                      <label>
+                        <input name="configDxfEncoding" type="checkbox" />
+                        Enable DXF_ENCODING=UTF-8 config
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-sm-9 col-sm-offset-3">
+                    <div class="checkbox">
+                      <label>
+                        <input name="writeBbox" type="checkbox" />
+                        Enable WRITE_BBOX=YES
                       </label>
                     </div>
                   </div>
@@ -250,6 +315,26 @@
         <li>
           <code>targetSrs</code>
           (optional) - the target projection
+        </li>
+        <li>
+          <code>dialect</code>
+          (optional) - SQL dialect (e.g., 'sqlite')
+        </li>
+        <li>
+          <code>sql</code>
+          (optional) - SQL query for filtering data
+        </li>
+        <li>
+          <code>simplify</code>
+          (optional) - Value for simplifying geometries (e.g., '0.1')
+        </li>
+        <li>
+          <code>configDxfEncoding</code>
+          (optional) - Set to any value to enable DXF_ENCODING=UTF-8 config
+        </li>
+        <li>
+          <code>writeBbox</code>
+          (optional) - Set to any value to enable WRITE_BBOX=YES
         </li>
         <li>
           <code>forcePlainText</code>
