@@ -292,6 +292,153 @@
           </div>
         </div>
       </div>
+      
+      <!-- New panel for File Information -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-info">
+            <div class="panel-heading">
+              <h3 class="panel-title">Get File Information (ogrinfo)</h3>
+            </div>
+            <div class="panel-body">
+              <form
+                class="form-horizontal"
+                role="form"
+                action="/info"
+                method="post"
+                enctype="multipart/form-data"
+              >
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="infoUpload"
+                    >File*:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="infoUpload"
+                      type="file"
+                      name="upload"
+                    />
+                    <p class="help-block">
+                      Upload a spatial file to analyze its information and structure.
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="infoWhere"
+                    >Where Clause:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="infoWhere"
+                      name="where"
+                      placeholder="e.g. name='test' OR population > 1000000"
+                    />
+                    <p class="help-block">
+                      Attribute query to filter features
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="infoSql"
+                    >SQL Query:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="infoSql"
+                      name="sql"
+                      placeholder="e.g. SELECT * FROM layer WHERE population > 1000000"
+                    />
+                    <p class="help-block">
+                      SQL query for advanced filtering
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="infoDialect"
+                    >SQL Dialect:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="infoDialect"
+                      name="dialect"
+                      placeholder="e.g. sqlite"
+                    />
+                    <p class="help-block">
+                      SQL dialect to use with queries
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="infoLimit"
+                    >Feature Limit:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="infoLimit"
+                      name="limit"
+                      placeholder="e.g. 10"
+                      type="number"
+                    />
+                    <p class="help-block">
+                      Limit the number of features returned
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="infoLayerName"
+                    >Layer Name:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="infoLayerName"
+                      name="layerName"
+                      placeholder="e.g. layer1"
+                    />
+                    <p class="help-block">
+                      Specific layer to analyze (leave empty for all layers)
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-9 col-sm-offset-3">
+                    <div class="checkbox">
+                      <label>
+                        <input name="summary" type="checkbox" />
+                        Summary only (show schema, projection, extent)
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-sm-9 col-sm-offset-3">
+                    <div class="checkbox">
+                      <label>
+                        <input name="al" type="checkbox" />
+                        List all layers
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-9 col-sm-offset-3">
+                    <button class="btn btn-info" name="analyze">
+                      Get File Information
+                    </button>
+                    <p class="help-block">
+                      Returns detailed information about the spatial file in JSON format
+                    </p>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <h3>Accessing Ogre using a POST request</h3>
       <p>
         You can perform Ogre transformations directly by making a HTTP POST
@@ -377,6 +524,83 @@
           <code>format</code>
           (optional) - File format supported by the
           <a href="https://github.com/wavded/ogr2ogr">ogr2ogr wrapper</a>
+        </li>
+      </ul>
+      <p>
+        <b>Get File Information (ogrinfo)</b>
+      </p>
+      <p>
+        <code>http://ogre.adc4gis.com/info</code> with the following params:
+      </p>
+      <ul>
+        <li>
+          <code>upload</code>
+          - the spatial file to analyze (required)
+        </li>
+        <li>
+          <code>summary</code>
+          (optional) - set to any value to show summary only
+        </li>
+        <li>
+          <code>features</code>
+          (optional) - set to any value to show features (default behavior)
+        </li>
+        <li>
+          <code>al</code>
+          (optional) - set to any value to list all layers
+        </li>
+        <li>
+          <code>where</code>
+          (optional) - attribute query (e.g., 'name="test"')
+        </li>
+        <li>
+          <code>sql</code>
+          (optional) - SQL query for filtering data
+        </li>
+        <li>
+          <code>dialect</code>
+          (optional) - SQL dialect (e.g., 'sqlite')
+        </li>
+        <li>
+          <code>limit</code>
+          (optional) - limit number of features (e.g., '10')
+        </li>
+        <li>
+          <code>spat</code>
+          (optional) - spatial filter 'xmin ymin xmax ymax'
+        </li>
+        <li>
+          <code>geomfield</code>
+          (optional) - geometry field name
+        </li>
+        <li>
+          <code>fid</code>
+          (optional) - feature ID to show
+        </li>
+        <li>
+          <code>layerName</code>
+          (optional) - specific layer name to analyze
+        </li>
+      </ul>
+      <p>
+        <b>Get GeoJSON Information</b>
+      </p>
+      <p>
+        <code>http://ogre.adc4gis.com/infoJson</code> with
+        <b>one of the following</b> params:
+      </p>
+      <ul>
+        <li>
+          <code>json</code>
+          - text of the GeoJSON file
+        </li>
+        <li>
+          <code>jsonUrl</code>
+          - the URL for a remote GeoJSON file
+        </li>
+        <li>
+          <code>layerName</code>
+          (optional) - specific layer name to analyze
         </li>
       </ul>
       <h3>

@@ -40,6 +40,20 @@ Additional POST parameters for /convert:
  simplify       Value for simplifying geometries (e.g., '0.1')
  configDxfEncoding  Set to any value to enable DXF_ENCODING=UTF-8 config
  writeBbox      Set to any value to enable WRITE_BBOX=YES
+
+Additional POST parameters for /info:
+ upload         File to analyze (required)
+ summary        Set to any value to show summary only
+ features       Set to any value to show features (default)
+ al             Set to any value to list all layers
+ where          Attribute query (e.g., 'name="test"')
+ sql            SQL query for filtering data
+ dialect        SQL dialect (e.g., 'sqlite')
+ limit          Limit number of features (e.g., '10')
+ spat           Spatial filter 'xmin ymin xmax ymax'
+ geomfield      Geometry field name
+ fid            Feature ID to show
+ layerName      Specific layer name to analyze
 ```
 
 ## DXF Conversion
@@ -54,6 +68,37 @@ curl -F "upload=@your_file.dxf" \
      -F "configDxfEncoding=true" \
      -F "writeBbox=true" \
      http://localhost:3000/convert > output.geojson
+```
+
+## File Information with ogrinfo
+
+To get information about spatial files, you can use the new ogrinfo endpoints:
+
+```sh
+# Get basic information about a file
+curl -F "upload=@your_file.shp" \
+     http://localhost:3000/info
+
+# Get summary information only
+curl -F "upload=@your_file.shp" \
+     -F "summary=true" \
+     http://localhost:3000/info
+
+# Get information with SQL filter
+curl -F "upload=@your_file.shp" \
+     -F "sql=SELECT * FROM layer WHERE population > 1000000" \
+     -F "dialect=sqlite" \
+     http://localhost:3000/info
+
+# Get information about GeoJSON from URL
+curl -X POST \
+     -F "jsonUrl=https://example.com/data.geojson" \
+     http://localhost:3000/infoJson
+
+# Get information about GeoJSON data
+curl -X POST \
+     -F 'json={"type":"FeatureCollection","features":[...]}' \
+     http://localhost:3000/infoJson
 ```
 
 See the [examples directory](/examples) for more usage examples.

@@ -24,13 +24,15 @@ RUN mkdir -p $PNPM_HOME && \
 # Create app directory
 WORKDIR /app
 
-# Copy your application
-COPY . .
+# Copy package files first for better layer caching
+COPY package.json pnpm-lock.yaml ./
 
-# Use pnpm instead of npm
+# Install dependencies
 RUN pnpm install
 RUN pnpm install -g ts-node typescript
-RUN pnpm add -D @types/node
+
+# Copy the rest of the application
+COPY . .
 
 EXPOSE 3000
 CMD [ "pnpm", "start" ]

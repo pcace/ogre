@@ -7,8 +7,12 @@ import {randomBytes} from "node:crypto"
 import {unlink, writeFile} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {Readable} from "node:stream"
+import {promisify} from "node:util"
+import {exec} from "node:child_process"
 import {ogr2ogr} from "ogr2ogr"
 import index from "./index.html?raw"
+
+const execAsync = promisify(exec)
 
 export interface OgreOpts {
   port?: number
@@ -17,19 +21,34 @@ export interface OgreOpts {
 }
 
 interface UploadOpts {
-  [key: string]: string | File
-  targetSrs: string
+  targetSrs?: string
   upload: File
-  sourceSrs: string
-  rfc7946: string
-  forcePlainText: string
-  forceDownload: string
-  callback: string
-  dialect: string
-  sql: string
-  simplify: string
-  configDxfEncoding: string
-  writeBbox: string
+  sourceSrs?: string
+  rfc7946?: string
+  forcePlainText?: string
+  forceDownload?: string
+  callback?: string
+  dialect?: string
+  sql?: string
+  simplify?: string
+  configDxfEncoding?: string
+  writeBbox?: string
+}
+
+interface OgrInfoOpts {
+  upload?: File
+  json?: string
+  summary?: string
+  features?: string
+  al?: string
+  where?: string
+  sql?: string
+  dialect?: string
+  limit?: string
+  spat?: string
+  geomfield?: string
+  fid?: string
+  layerName?: string
 }
 
 const TMP_DIR = tmpdir()
@@ -58,6 +77,8 @@ export class Ogre {
     app.use(cors(), bodyLimit({maxSize: this.limit}))
     app.post("/convert", this.convert())
     app.post("/convertJson", this.convertJson())
+    app.post("/info", this.info())
+    app.post("/infoJson", this.infoJson())
   }
 
   start(): void {
@@ -188,6 +209,167 @@ export class Ogre {
       return c.text(out.text)
     } else {
       return c.json(out.data)
+    }
+  }
+
+  private info = (): Handler => async (c) => {
+    let body = await c.req.parseBody()
+    let {
+      upload,
+      summary,
+      features,
+      al,
+      where,
+      sql,
+      dialect,
+      limit,
+      spat,
+      geomfield,
+      fid,
+      layerName,
+    } = body as OgrInfoOpts
+    
+    if (!upload) {
+      return c.json({error: true, msg: "No file provided"}, 400)
+    }
+
+    let path = TMP_DIR + "/" + randomBytes(16).toString("hex") + upload.name
+    
+    try {
+      let buf = await upload.arrayBuffer()
+      await writeFile(path, Buffer.from(buf))
+
+      // Build ogrinfo command
+      let args = ["ogrinfo"]
+      
+      // Always output JSON format for API consumption
+      args.push("-json")
+      
+      // Add options based on parameters
+      if (summary) args.push("-summary")
+      if (features || (!summary && !al)) args.push("-features") // Default to features if not summary
+      if (al) args.push("-al")
+      if (where) args.push("-where", where)
+      if (sql) args.push("-sql", sql)
+      if (dialect) args.push("-dialect", dialect)
+      if (limit) args.push("-limit", limit)
+      if (spat) {
+        // spat should be "xmin ymin xmax ymax"
+        let coords = spat.split(" ")
+        if (coords.length === 4) {
+          args.push("-spat", ...coords)
+        }
+      }
+      if (geomfield) args.push("-geomfield", geomfield)
+      if (fid) args.push("-fid", fid)
+      
+      // Add the file path
+      args.push(path)
+      
+      // Add layer name if specified
+      if (layerName) args.push(layerName)
+      
+      let command = args.join(" ")
+      let {stdout, stderr} = await execAsync(command, {
+        timeout: this.timeout,
+        maxBuffer: this.limit * 10,
+      })
+      
+      if (stderr && stderr.trim()) {
+        console.warn("ogrinfo stderr:", stderr)
+      }
+      
+      try {
+        let data = JSON.parse(stdout)
+        return c.json(data)
+      } catch (parseError) {
+        // If JSON parsing fails, return the raw output
+        return c.json({
+          error: false,
+          rawOutput: stdout,
+          message: "ogrinfo output was not valid JSON"
+        })
+      }
+      
+    } catch (error: any) {
+      console.error("ogrinfo error:", error)
+      return c.json({
+        error: true,
+        message: error.message || "ogrinfo command failed"
+      }, 500)
+    } finally {
+      unlink(path).catch((er) => console.error("unlink error", er.message))
+    }
+  }
+
+  private infoJson = (): Handler => async (c) => {
+    let {jsonUrl, json, layerName}: Record<string, string> = await c.req.parseBody()
+    
+    if (!jsonUrl && !json) {
+      return c.json({error: true, msg: "No json provided"}, 400)
+    }
+
+    let data
+    if (json) {
+      try {
+        data = JSON.parse(json)
+      } catch (_er) {
+        return c.json({error: true, msg: "Invalid json provided"}, 400)
+      }
+    }
+
+    // Create a temporary GeoJSON file
+    let path = TMP_DIR + "/" + randomBytes(16).toString("hex") + ".geojson"
+    
+    try {
+      if (jsonUrl) {
+        // For URL, we'll download and then process
+        let response = await fetch(jsonUrl)
+        if (!response.ok) {
+          return c.json({error: true, msg: "Failed to fetch JSON from URL"}, 400)
+        }
+        data = await response.json()
+      }
+      
+      // Write the GeoJSON to a temporary file
+      await writeFile(path, JSON.stringify(data))
+      
+      // Build ogrinfo command
+      let args = ["ogrinfo", "-json", "-features", path]
+      
+      // Add layer name if specified
+      if (layerName) args.push(layerName)
+      
+      let command = args.join(" ")
+      let {stdout, stderr} = await execAsync(command, {
+        timeout: this.timeout,
+        maxBuffer: this.limit * 10,
+      })
+      
+      if (stderr && stderr.trim()) {
+        console.warn("ogrinfo stderr:", stderr)
+      }
+      
+      try {
+        let result = JSON.parse(stdout)
+        return c.json(result)
+      } catch (parseError) {
+        // If JSON parsing fails, return the raw output
+        return c.json({
+          error: false,
+          rawOutput: stdout,
+          message: "ogrinfo output was not valid JSON"
+        })
+      }
+      
+    } catch (error: any) {
+      console.error("ogrinfo error:", error)
+      return c.json({
+        error: true,
+        message: error.message || "ogrinfo command failed"
+      }, 500)
+    } finally {
+      unlink(path).catch((er) => console.error("unlink error", er.message))
     }
   }
 }
