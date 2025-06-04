@@ -168,6 +168,18 @@ curl -X POST \
      http://localhost:3000/infoJson
 ```
 
+## GDALInfo (Raster File Information)
+
+To get information about a raster file (e.g. GeoTIFF), use the new gdalinfo endpoint:
+
+```sh
+# Get raster file information as JSON
+curl -F "upload=@your_file.tif" \
+     http://localhost:3000/gdalinfo
+```
+
+- The response will be a JSON object with all metadata and raster information as returned by `gdalinfo -json`.
+
 See the [examples directory](/examples) for more usage examples.
 
 [1]: https://gdal.org/download.html
