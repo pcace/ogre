@@ -293,6 +293,272 @@
         </div>
       </div>
       
+      <!-- New panel for Rasterize -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-success">
+            <div class="panel-heading">
+              <h3 class="panel-title">Convert GeoJSON to Raster (gdal_rasterize)</h3>
+            </div>
+            <div class="panel-body">
+              <form
+                class="form-horizontal"
+                role="form"
+                action="/rasterize"
+                method="post"
+                enctype="multipart/form-data"
+              >
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterUpload"
+                    >File:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterUpload"
+                      type="file"
+                      name="upload"
+                    />
+                    <p class="help-block">
+                      Upload a spatial file to rasterize, or provide GeoJSON below.
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterJson"
+                    >GeoJSON:</label
+                  >
+                  <div class="col-sm-9">
+                    <textarea
+                      class="form-control"
+                      id="rasterJson"
+                      name="json"
+                      rows="4"
+                      placeholder='{"type": "FeatureCollection", "features": [...]}'
+                    ></textarea>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterJsonUrl"
+                    >GeoJSON URL:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterJsonUrl"
+                      name="jsonUrl"
+                      type="url"
+                      placeholder="e.g. http://path.to/sample.json"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="outputFormat"
+                    >Output Format:</label
+                  >
+                  <div class="col-sm-9">
+                    <select class="form-control" id="outputFormat" name="outputFormat">
+                      <option value="GTiff">GeoTIFF</option>
+                    </select>
+                    <p class="help-block">
+                      Only GeoTIFF format is currently supported.
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterWidth"
+                    >Width (pixels):</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterWidth"
+                      name="width"
+                      type="number"
+                      placeholder="e.g. 512"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterHeight"
+                    >Height (pixels):</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterHeight"
+                      name="height"
+                      type="number"
+                      placeholder="e.g. 512"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterXres"
+                    >X Resolution:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterXres"
+                      name="xres"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 0.001"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterYres"
+                    >Y Resolution:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterYres"
+                      name="yres"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 0.001"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterExtent"
+                    >Extent (xmin ymin xmax ymax):</label
+                  >
+                  <div class="col-sm-3">
+                    <input
+                      class="form-control"
+                      name="xmin"
+                      type="number"
+                      step="any"
+                      placeholder="xmin"
+                    />
+                  </div>
+                  <div class="col-sm-3">
+                    <input
+                      class="form-control"
+                      name="ymin"
+                      type="number"
+                      step="any"
+                      placeholder="ymin"
+                    />
+                  </div>
+                  <div class="col-sm-3">
+                    <input
+                      class="form-control"
+                      name="xmax"
+                      type="number"
+                      step="any"
+                      placeholder="xmax"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-3 col-sm-offset-3">
+                    <input
+                      class="form-control"
+                      name="ymax"
+                      type="number"
+                      step="any"
+                      placeholder="ymax"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterBurn"
+                    >Burn Value:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterBurn"
+                      name="burn"
+                      type="number"
+                      placeholder="e.g. 255 (default)"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterAttribute"
+                    >Attribute (for burn values):</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterAttribute"
+                      name="attribute"
+                      placeholder="e.g. value, population"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterSrs"
+                    >Spatial Reference:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterSrs"
+                      name="srs"
+                      placeholder="e.g. EPSG:4326"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterNodata"
+                    >NoData Value:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterNodata"
+                      name="nodata"
+                      type="number"
+                      placeholder="e.g. 0"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="rasterLayerName"
+                    >Layer Name:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="rasterLayerName"
+                      name="layerName"
+                      placeholder="e.g. layer1"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-9 col-sm-offset-3">
+                    <div class="checkbox">
+                      <label>
+                        <input name="allTouched" type="checkbox" />
+                        All touched (rasterize all pixels touched by geometries)
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-9 col-sm-offset-3">
+                    <button class="btn btn-success" name="rasterize">
+                      Convert to Raster
+                    </button>
+                    <p class="help-block">
+                      Converts vector data to raster format (GeoTIFF only)
+                    </p>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <!-- New panel for File Information -->
       <div class="row">
         <div class="col-md-12">
@@ -439,6 +705,321 @@
         </div>
       </div>
       
+      <!-- New panel for Translate -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-danger">
+            <div class="panel-heading">
+              <h3 class="panel-title">Translate Raster (gdal_translate)</h3>
+            </div>
+            <div class="panel-body">
+              <form
+                class="form-horizontal"
+                role="form"
+                action="/translate"
+                method="post"
+                enctype="multipart/form-data"
+              >
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateUpload"
+                    >Raster File*:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="translateUpload"
+                      type="file"
+                      name="upload"
+                    />
+                    <p class="help-block">
+                      Upload a raster file (GeoTIFF, etc.) to convert to another format.
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateOutputFormat"
+                    >Output Format:</label
+                  >
+                  <div class="col-sm-9">
+                    <select class="form-control" id="translateOutputFormat" name="outputFormat">
+                      <option value="JPEG">JPEG</option>
+                      <option value="PNG">PNG</option>
+                      <option value="GTiff">GeoTIFF</option>
+                    </select>
+                    <p class="help-block">
+                      Choose the output raster format.
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateOutputType"
+                    >Output Data Type:</label
+                  >
+                  <div class="col-sm-9">
+                    <select class="form-control" id="translateOutputType" name="outputType">
+                      <option value="">Auto (keep original)</option>
+                      <option value="Byte">Byte (0-255)</option>
+                      <option value="Int16">Int16</option>
+                      <option value="UInt16">UInt16</option>
+                      <option value="Int32">Int32</option>
+                      <option value="UInt32">UInt32</option>
+                      <option value="Float32">Float32</option>
+                      <option value="Float64">Float64</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateBands"
+                    >Bands (comma-separated):</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="translateBands"
+                      name="band"
+                      placeholder="e.g. 1,2,3 or leave empty for all bands"
+                    />
+                    <p class="help-block">
+                      Specify which bands to include (e.g., "1,2,3" for RGB).
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateExpand"
+                    >Expand:</label
+                  >
+                  <div class="col-sm-9">
+                    <select class="form-control" id="translateExpand" name="expand">
+                      <option value="">None</option>
+                      <option value="gray">Gray</option>
+                      <option value="rgb">RGB</option>
+                      <option value="rgba">RGBA</option>
+                    </select>
+                    <p class="help-block">
+                      Expand single band to multi-band (useful for color tables).
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateSize"
+                    >Output Size:</label
+                  >
+                  <div class="col-sm-4">
+                    <input
+                      class="form-control"
+                      name="width"
+                      type="number"
+                      placeholder="Width"
+                    />
+                  </div>
+                  <div class="col-sm-4">
+                    <input
+                      class="form-control"
+                      name="height"
+                      type="number"
+                      placeholder="Height"
+                    />
+                  </div>
+                  <div class="col-sm-1">
+                    <p class="form-control-static">pixels</p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateScale"
+                    >Scaling (src_min src_max dst_min dst_max):</label
+                  >
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="scale_srcMin"
+                      type="number"
+                      step="any"
+                      placeholder="src min"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="scale_srcMax"
+                      type="number"
+                      step="any"
+                      placeholder="src max"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="scale_dstMin"
+                      type="number"
+                      step="any"
+                      placeholder="dst min"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="scale_dstMax"
+                      type="number"
+                      step="any"
+                      placeholder="dst max"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateSrcWin"
+                    >Source Window (x_off y_off x_size y_size):</label
+                  >
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="srcwin_xoff"
+                      type="number"
+                      placeholder="x offset"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="srcwin_yoff"
+                      type="number"
+                      placeholder="y offset"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="srcwin_xsize"
+                      type="number"
+                      placeholder="x size"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="srcwin_ysize"
+                      type="number"
+                      placeholder="y size"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateProjWin"
+                    >Projection Window (ulx uly lrx lry):</label
+                  >
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="projwin_ulx"
+                      type="number"
+                      step="any"
+                      placeholder="upper left x"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="projwin_uly"
+                      type="number"
+                      step="any"
+                      placeholder="upper left y"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="projwin_lrx"
+                      type="number"
+                      step="any"
+                      placeholder="lower right x"
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input
+                      class="form-control"
+                      name="projwin_lry"
+                      type="number"
+                      step="any"
+                      placeholder="lower right y"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateProjWinSrs"
+                    >Projection Window SRS:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="translateProjWinSrs"
+                      name="projwinSrs"
+                      placeholder="e.g. EPSG:4326"
+                    />
+                    <p class="help-block">
+                      Spatial reference system for the projection window coordinates.
+                    </p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateQuality"
+                    >JPEG Quality:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="translateQuality"
+                      name="quality"
+                      type="number"
+                      min="1"
+                      max="100"
+                      placeholder="e.g. 85 (1-100, only for JPEG)"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateCompress"
+                    >Compression:</label
+                  >
+                  <div class="col-sm-9">
+                    <select class="form-control" id="translateCompress" name="compress">
+                      <option value="">None</option>
+                      <option value="DEFLATE">DEFLATE</option>
+                      <option value="LZW">LZW</option>
+                      <option value="PACKBITS">PACKBITS</option>
+                      <option value="JPEG">JPEG</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="translateNodata"
+                    >NoData Value:</label
+                  >
+                  <div class="col-sm-9">
+                    <input
+                      class="form-control"
+                      id="translateNodata"
+                      name="nodata"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 0 or -9999"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-9 col-sm-offset-3">
+                    <button class="btn btn-danger" name="translate">
+                      Translate Raster
+                    </button>
+                    <p class="help-block">
+                      Converts raster files between formats (GeoTIFF, JPEG, PNG).
+                    </p>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <h3>Accessing Ogre using a POST request</h3>
       <p>
         You can perform Ogre transformations directly by making a HTTP POST
@@ -524,6 +1105,162 @@
           <code>format</code>
           (optional) - File format supported by the
           <a href="https://github.com/wavded/ogr2ogr">ogr2ogr wrapper</a>
+        </li>
+      </ul>
+      <p>
+        <b>Convert GeoJSON to Raster (gdal_rasterize)</b>
+      </p>
+      <p>
+        <code>http://ogre.adc4gis.com/rasterize</code> with the following params:
+      </p>
+      <ul>
+        <li>
+          <code>upload</code>
+          - the spatial file to rasterize (required, or use json/jsonUrl)
+        </li>
+        <li>
+          <code>json</code>
+          - GeoJSON string to rasterize (alternative to upload)
+        </li>
+        <li>
+          <code>jsonUrl</code>
+          - URL to GeoJSON file to rasterize (alternative to upload)
+        </li>
+        <li>
+          <code>outputFormat</code>
+          (optional) - Output format: 'GTiff' (only format supported)
+        </li>
+        <li>
+          <code>width</code>
+          (optional) - Output width in pixels (use with height)
+        </li>
+        <li>
+          <code>height</code>
+          (optional) - Output height in pixels (use with width)
+        </li>
+        <li>
+          <code>xres</code>
+          (optional) - Output X resolution (use with yres)
+        </li>
+        <li>
+          <code>yres</code>
+          (optional) - Output Y resolution (use with xres)
+        </li>
+        <li>
+          <code>xmin</code>, <code>ymin</code>, <code>xmax</code>, <code>ymax</code>
+          (optional) - Output extent coordinates
+        </li>
+        <li>
+          <code>burn</code>
+          (optional) - Fixed value to burn into raster (default: 255)
+        </li>
+        <li>
+          <code>attribute</code>
+          (optional) - Attribute name to get burn values from
+        </li>
+        <li>
+          <code>nodata</code>
+          (optional) - NoData value for output raster
+        </li>
+        <li>
+          <code>init</code>
+          (optional) - Initialize raster pixels with this value
+        </li>
+        <li>
+          <code>srs</code>
+          (optional) - Spatial reference system (e.g., 'EPSG:4326')
+        </li>
+        <li>
+          <code>allTouched</code>
+          (optional) - Set to any value to enable ALL_TOUCHED option
+        </li>
+        <li>
+          <code>outputType</code>
+          (optional) - Output data type (e.g., 'Byte', 'Int16', 'Float32')
+        </li>
+        <li>
+          <code>bands</code>
+          (optional) - Number of output bands
+        </li>
+        <li>
+          <code>layerName</code>
+          (optional) - Specific layer name to rasterize
+        </li>
+        <li>
+          <code>sql</code>
+          (optional) - SQL query for filtering data
+        </li>
+        <li>
+          <code>dialect</code>
+          (optional) - SQL dialect (e.g., 'sqlite')
+        </li>
+        <li>
+          <code>where</code>
+          (optional) - WHERE clause for filtering features
+        </li>
+      </ul>
+      <p>
+        <b>Translate Raster (gdal_translate)</b>
+      </p>
+      <p>
+        <code>http://ogre.adc4gis.com/translate</code> with the following params:
+      </p>
+      <ul>
+        <li>
+          <code>upload</code>
+          - the raster file to translate (required)
+        </li>
+        <li>
+          <code>outputFormat</code>
+          (optional) - Output format: 'JPEG', 'PNG', 'GTiff' (default: 'JPEG')
+        </li>
+        <li>
+          <code>outputType</code>
+          (optional) - Output data type (e.g., 'Byte', 'Int16', 'Float32')
+        </li>
+        <li>
+          <code>band</code>
+          (optional) - Band numbers to extract (comma-separated, e.g., '1,2,3')
+        </li>
+        <li>
+          <code>mask</code>
+          (optional) - Mask band number
+        </li>
+        <li>
+          <code>expand</code>
+          (optional) - Expand options: 'gray', 'rgb', 'rgba'
+        </li>
+        <li>
+          <code>width</code>, <code>height</code>
+          (optional) - Output size in pixels
+        </li>
+        <li>
+          <code>scale_srcMin</code>, <code>scale_srcMax</code>, <code>scale_dstMin</code>, <code>scale_dstMax</code>
+          (optional) - Scaling parameters for pixel values
+        </li>
+        <li>
+          <code>srcwin_xoff</code>, <code>srcwin_yoff</code>, <code>srcwin_xsize</code>, <code>srcwin_ysize</code>
+          (optional) - Source window (pixel coordinates) to extract
+        </li>
+        <li>
+          <code>projwin_ulx</code>, <code>projwin_uly</code>, <code>projwin_lrx</code>, <code>projwin_lry</code>
+          (optional) - Projection window (geographic coordinates) to extract
+        </li>
+        <li>
+          <code>projwinSrs</code>
+          (optional) - Spatial reference system for projection window (e.g., 'EPSG:4326')
+        </li>
+        <li>
+          <code>quality</code>
+          (optional) - JPEG quality (1-100, only for JPEG output)
+        </li>
+        <li>
+          <code>compress</code>
+          (optional) - Compression method: 'DEFLATE', 'LZW', 'PACKBITS', 'JPEG'
+        </li>
+        <li>
+          <code>nodata</code>
+          (optional) - NoData value for output raster
         </li>
       </ul>
       <p>

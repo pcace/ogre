@@ -54,6 +54,73 @@ Additional POST parameters for /info:
  geomfield      Geometry field name
  fid            Feature ID to show
  layerName      Specific layer name to analyze
+
+Additional POST parameters for /rasterize:
+ upload         File to rasterize (required, or use json/jsonUrl)
+ json           GeoJSON string to rasterize
+ jsonUrl        URL to GeoJSON to rasterize
+ outputFormat   Output format: 'GTiff' (default) or 'PNG'
+ width          Output width in pixels (use with height)
+ height         Output height in pixels (use with width)
+ xres           Output X resolution (use with yres)
+ yres           Output Y resolution (use with xres)
+ xmin           Minimum X extent
+ ymin           Minimum Y extent
+ xmax           Maximum X extent
+ ymax           Maximum Y extent
+ burn           Fixed value to burn (default: 255)
+ attribute      Attribute name to get burn values from
+ nodata         NoData value for output
+ init           Initialize raster with this value
+ srs            Spatial reference system
+ allTouched     Set to any value to enable ALL_TOUCHED option
+ outputType     Output data type (e.g., 'Byte', 'Int16', 'Float32')
+ layerName      Specific layer name to rasterize
+ sql            SQL query for filtering data
+ dialect        SQL dialect
+ where          WHERE clause for filtering
+```
+
+## Rasterization with gdal_rasterize
+
+To convert GeoJSON or other vector formats to raster images (GeoTIFF or PNG), you can use the rasterize endpoint:
+
+```sh
+# Convert GeoJSON file to GeoTIFF
+curl -F "upload=@your_file.geojson" \
+     -F "outputFormat=GTiff" \
+     -F "width=1024" \
+     -F "height=1024" \
+     -F "burn=255" \
+     http://localhost:3000/rasterize > output.tif
+
+# Convert GeoJSON with custom extent and resolution
+curl -F "upload=@your_file.geojson" \
+     -F "outputFormat=PNG" \
+     -F "xmin=-180" \
+     -F "ymin=-90" \
+     -F "xmax=180" \
+     -F "ymax=90" \
+     -F "xres=0.1" \
+     -F "yres=0.1" \
+     -F "burn=255" \
+     -F "srs=EPSG:4326" \
+     http://localhost:3000/rasterize > output.png
+
+# Convert with attribute-based burn values
+curl -F "upload=@your_file.geojson" \
+     -F "attribute=population" \
+     -F "width=512" \
+     -F "height=512" \
+     -F "outputType=Float32" \
+     http://localhost:3000/rasterize > output.tif
+
+# Convert GeoJSON from URL
+curl -F "jsonUrl=https://example.com/data.geojson" \
+     -F "outputFormat=PNG" \
+     -F "width=800" \
+     -F "height=600" \
+     http://localhost:3000/rasterize > output.png
 ```
 
 ## DXF Conversion
