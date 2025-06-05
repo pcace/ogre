@@ -137,6 +137,26 @@ curl -F "upload=@your_file.dxf" \
      http://localhost:3000/convert > output.geojson
 ```
 
+## DWG Conversion
+
+To convert DXF files to DWG format, use the `/convertToDwg` endpoint. This feature uses LibreDWG's `dxf2dwg` tool to convert DXF files directly to DWG format:
+
+```sh
+# Convert a DXF file to DWG
+curl -F "upload=@your_file.dxf" \
+     -F "outputName=converted" \
+     http://localhost:3000/convertToDwg > output.dwg
+
+# Convert DXF to DWG with default name
+curl -F "upload=@drawing.dxf" \
+     http://localhost:3000/convertToDwg > output.dwg
+```
+
+**Note:** 
+- Only DXF files are supported as input for DWG conversion
+- DWG conversion requires LibreDWG tools to be installed in the system. In the Docker image, these are automatically included.
+- The output DWG file will be in AutoCAD 2000 format (R2000)
+
 ## File Information with ogrinfo
 
 To get information about spatial files, you can use the new ogrinfo endpoints:

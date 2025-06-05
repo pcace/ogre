@@ -293,6 +293,69 @@
         </div>
       </div>
       
+      <!-- New panel for Convert to DWG -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="panel panel-warning">
+        <div class="panel-heading">
+          <h3 class="panel-title">Convert DXF to DWG</h3>
+        </div>
+        <div class="panel-body">
+          <form
+        class="form-horizontal"
+        role="form"
+        action="/convertToDwg"
+        method="post"
+        enctype="multipart/form-data"
+          >
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="dwgUpload"
+        >DXF File*:</label
+          >
+          <div class="col-sm-9">
+        <input
+          class="form-control"
+          id="dwgUpload"
+          name="upload"
+          type="file"
+          accept=".dxf"
+          required
+        />
+        <p class="help-block">
+          Must be a DXF file. Only DXF to DWG conversion is supported.
+        </p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="outputName"
+        >Output Name:</label
+          >
+          <div class="col-sm-9">
+        <input
+          class="form-control"
+          id="outputName"
+          name="outputName"
+          type="text"
+          placeholder="e.g. converted (optional)"
+        />
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-9 col-sm-offset-3">
+        <button class="btn btn-warning" name="convertToDwg">
+          Convert DXF to DWG
+        </button>
+        <p class="help-block">
+          Converts DXF files to DWG format using LibreDWG
+        </p>
+          </div>
+        </div>
+          </form>
+        </div>
+          </div>
+        </div>
+      </div>
+      
       <!-- New panel for Rasterize -->
       <div class="row">
         <div class="col-md-12">
@@ -1135,6 +1198,22 @@
           <code>format</code>
           (optional) - File format supported by the
           <a href="https://github.com/wavded/ogr2ogr">ogr2ogr wrapper</a>
+        </li>
+      </ul>
+      <p>
+        <b>Convert to DWG</b>
+      </p>
+      <p>
+        <code>http://ogre.adc4gis.com/convertToDwg</code> with the following params:
+      </p>
+      <ul>
+        <li>
+          <code>upload</code>
+          - the spatial file to convert (GeoJSON, Shapefile, etc.)
+        </li>
+        <li>
+          <code>outputName</code>
+          (optional) - the name for the resulting DWG file (without extension)
         </li>
       </ul>
       <p>

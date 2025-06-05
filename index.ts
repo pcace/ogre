@@ -18,6 +18,7 @@ import { translateHandler } from "./src/translate"
 import { infoJsonHandler } from "./src/infoJson"
 import { convertJsonHandler } from "./src/convertJson"
 import { gdalinfoHandler } from "./src/gdalinfo"
+import { convertToDwgHandler } from "./src/convertToDwg"
 
 const execAsync = promisify(exec)
 
@@ -102,6 +103,11 @@ export interface TranslateOpts {
   nodata?: string
 }
 
+export interface ConvertToDwgOpts {
+  upload: File
+  outputName?: string
+}
+
 const TMP_DIR = tmpdir()
 
 // Security functions for input validation and sanitization
@@ -155,6 +161,7 @@ export class Ogre {
     app.use(cors(), bodyLimit({maxSize: this.limit}))
     app.post("/convert", this.convert())
     app.post("/convertJson", this.convertJson())
+    app.post("/convertToDwg", this.convertToDwg())
     app.post("/rasterize", this.rasterize())
     app.post("/translate", this.translate())
     app.post("/ogrinfo", this.ogrinfo())
@@ -185,6 +192,10 @@ export class Ogre {
 
   private convertJson = (): Handler => async (c) => {
     return convertJsonHandler(c, { timeout: this.timeout, limit: this.limit })
+  }
+
+  private convertToDwg = (): Handler => async (c) => {
+    return convertToDwgHandler(c, { timeout: this.timeout, limit: this.limit })
   }
 
   private ogrinfo = (): Handler => async (c) => {
