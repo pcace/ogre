@@ -7,7 +7,7 @@ RUN corepack enable && mkdir -p $PNPM_HOME
 FROM ghcr.io/osgeo/gdal:ubuntu-full-latest
 
 # Install Node.js and npm from NodeSource repository, plus build tools for LibreDWG
-RUN apt-get update && apt-get install -y curl gnupg build-essential autoconf automake libtool git texinfo && \
+RUN apt-get update && apt-get install -y curl gnupg build-essential autoconf automake libtool git texinfo libxkbcommon0 && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
@@ -15,17 +15,55 @@ RUN apt-get update && apt-get install -y curl gnupg build-essential autoconf aut
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Build and install LibreDWG from source (GitHub since GNU FTP doesn't include bindings)
+# # Build and install LibreDWG from source (GitHub since GNU FTP doesn't include bindings)
+# RUN cd /tmp && \
+#     git clone https://github.com/LibreDWG/libredwg.git && \
+#     cd libredwg && \
+#     sh ./autogen.sh && \
+#     ./configure --disable-bindings --enable-trace && \
+#     make -j$(nproc) && \
+#     make install && \
+#     ldconfig && \
+#     cd / && \
+#     rm -rf /tmp/libredwg
+
+# Install ODA File Converter
 RUN cd /tmp && \
-    git clone https://github.com/LibreDWG/libredwg.git && \
-    cd libredwg && \
-    sh ./autogen.sh && \
-    ./configure --disable-bindings --enable-trace && \
-    make -j$(nproc) && \
-    make install && \
-    ldconfig && \
-    cd / && \
-    rm -rf /tmp/libredwg
+    curl -L "https://www.opendesign.com/guestfiles/get?filename=ODAFileConverter_QT6_lnxX64_8.3dll_26.4.deb" -o ODAFileConverter.deb && \
+    dpkg -i ODAFileConverter.deb || apt-get install -f -y && \
+    rm -f ODAFileConverter.deb
+
+# Install Qt/X11 dependencies for ODAFileConverter
+RUN apt-get update && apt-get install -y \
+    libxcb-xinerama0 \
+    libxcb-xinput0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-render-util0 \
+    libxcb-xkb1 \
+    libxkbcommon-x11-0 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcb-glx0 \
+    libxcb-shm0 \
+    libxcb-sync1 \
+    libxcb-xfixes0 \
+    libxcb-shape0 \
+    libxcb-randr0 \
+    libxrender1 \
+    libxi6 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxrandr2 \
+    libxtst6 \
+    libxv1 \
+    libxxf86vm1 \
+    xvfb && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set up pnpm directly (without corepack)
 ENV PNPM_HOME="/usr/local/pnpm"

@@ -1,9 +1,9 @@
 import { randomBytes } from "node:crypto"
-import { unlink, writeFile, readFile } from "node:fs/promises"
+import { unlink, writeFile, readFile, mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { promisify } from "node:util"
 import { exec } from "node:child_process"
-import { basename } from "node:path"
+import { join } from "node:path"
 import type { ConvertToDwgOpts } from "../index"
 
 const execAsync = promisify(exec)
@@ -34,27 +34,23 @@ export async function convertToDwgHandler(
 
   let dxfPath: string | undefined
   let dwgPath: string | undefined
+  let inputDir: string | undefined
+  let outputDir: string | undefined
 
   try {
-    // Step 1: Save the uploaded DXF file
+    // Step 1: Create temp input/output folders and save the uploaded DXF file
+    inputDir = await mkdtemp(TMP_DIR + "/dxf2dwg-in-")
+    outputDir = await mkdtemp(TMP_DIR + "/dxf2dwg-out-")
     const dxfFilename = randomBytes(16).toString("hex") + ".dxf"
-    dxfPath = TMP_DIR + "/" + dxfFilename
-    
+    dxfPath = join(inputDir, dxfFilename)
     const buf = await upload.arrayBuffer()
     await writeFile(dxfPath, Buffer.from(buf))
 
-    // Step 2: Convert DXF to DWG using LibreDWG's dxf2dwg
-    const dwgFilename = (outputName || "converted") + ".dwg"
-    
-    // dxf2dwg creates the output file in the current directory with the same base name
-    const dxfBasename = basename(dxfPath, '.dxf')
-    const expectedDwgName = dxfBasename + ".dwg"
-    dwgPath = TMP_DIR + "/" + expectedDwgName
-
-    // Execute dxf2dwg command in the temp directory
-    console.log(`Converting DXF to DWG using dxf2dwg...`)
-    const command = `cd "${TMP_DIR}" && dxf2dwg "${dxfFilename}"`
-    
+    // Step 2: Convert DXF to DWG using ODAFileConverter
+    const dwgBaseName = (outputName || "converted") + ".dwg"
+    // ODAFileConverter will output to outputDir with same base name as input
+    const command = `xvfb-run ODAFileConverter "${inputDir}" "${outputDir}" ACAD2018 DWG 0 1`
+    console.log(`Converting DXF to DWG using ODAFileConverter...`)
     let conversionOutput = { stdout: "", stderr: "" }
     try {
       const { stderr, stdout } = await execAsync(command, {
@@ -63,36 +59,25 @@ export async function convertToDwgHandler(
       })
       conversionOutput = { stdout, stderr }
     } catch (execError: any) {
-      // Don't throw immediately - check if DWG was created despite errors
-      conversionOutput = { 
-        stdout: execError.stdout || "", 
-        stderr: execError.stderr || execError.message || "" 
+      conversionOutput = {
+        stdout: execError.stdout || "",
+        stderr: execError.stderr || execError.message || ""
       }
     }
-
-    console.log("dxf2dwg stdout:", conversionOutput.stdout)
+    console.log("ODAFileConverter stdout:", conversionOutput.stdout)
     if (conversionOutput.stderr && conversionOutput.stderr.trim()) {
-      console.warn("dxf2dwg stderr:", conversionOutput.stderr)
+      console.warn("ODAFileConverter stderr:", conversionOutput.stderr)
     }
 
-    // Step 3: Check if the DWG file was created and read it
-    try {
-      const dwgBuffer = await readFile(dwgPath)
-      
-      // Success! DWG file was created, ignore any warnings/errors
-      console.log("DWG file successfully created despite any warnings")
-      
-      // Set appropriate headers
-      c.header("content-type", "application/octet-stream")
-      c.header("content-disposition", `attachment; filename="${sanitizeFilename(dwgFilename)}"`)
-
-      return c.body(dwgBuffer)
-    } catch (fileError) {
-      // Only now throw an error since no DWG was created
-      const errorMsg = conversionOutput.stderr || "No specific error message"
-      throw new Error(`DWG file was not created. Conversion failed with:\n${errorMsg}`)
-    }
-
+    // Step 3: Find the DWG file in outputDir
+    const outputFiles = await import('node:fs/promises').then(fs => fs.readdir(outputDir!))
+    const dwgFile = outputFiles.find(f => f.toLowerCase().endsWith('.dwg'))
+    if (!dwgFile) throw new Error('No DWG file created by ODAFileConverter.')
+    dwgPath = join(outputDir, dwgFile)
+    const dwgBuffer = await readFile(dwgPath)
+    c.header("content-type", "application/octet-stream")
+    c.header("content-disposition", `attachment; filename=\"${sanitizeFilename(dwgBaseName)}\"`)
+    return c.body(dwgBuffer)
   } catch (error: any) {
     console.error("convertToDwg error:", error)
     return c.json({
@@ -100,12 +85,18 @@ export async function convertToDwgHandler(
       message: error.message || "DWG conversion failed"
     }, 500)
   } finally {
-    // Clean up temporary files
-    // if (dxfPath) {
-    //   unlink(dxfPath).catch((er) => console.error("unlink error (dxf):", er.message))
-    // }
-    // if (dwgPath) {
-    //   unlink(dwgPath).catch((er) => console.error("unlink error (dwg):", er.message))
-    // }
+    // Clean up temporary files and folders
+    if (dxfPath) {
+      unlink(dxfPath).catch((er) => console.error("unlink error (dxf):", er.message))
+    }
+    if (dwgPath) {
+      unlink(dwgPath).catch((er) => console.error("unlink error (dwg):", er.message))
+    }
+    if (inputDir) {
+      rm(inputDir, { recursive: true, force: true }).catch((er) => console.error("rm error (inputDir):", er.message))
+    }
+    if (outputDir) {
+      rm(outputDir, { recursive: true, force: true }).catch((er) => console.error("rm error (outputDir):", er.message))
+    }
   }
 }
