@@ -83,7 +83,9 @@ Additional POST parameters for /rasterize:
 
 ## Shapefile ZIP Upload
 
-Shapefiles consist of multiple files (.shp, .shx, .dbf, .prj, etc.). You can upload them as a ZIP archive:
+Shapefiles consist of multiple files (.shp, .shx, .dbf, .prj, etc.). You can upload them in two ways:
+
+### Option 1: ZIP Archive (recommended)
 
 ```sh
 # Convert a shapefile ZIP to GeoJSON
@@ -102,10 +104,25 @@ curl -F "upload=@myshapefile.zip" \
      http://localhost:3000/convert > output.geojson
 ```
 
+### Option 2: Multiple File Upload
+
+Upload individual shapefile components separately:
+
+```sh
+# Upload all shapefile components with multiple -F upload=@ parameters
+curl -F "upload=@roads.shp" \
+     -F "upload=@roads.dbf" \
+     -F "upload=@roads.shx" \
+     -F "upload=@roads.prj" \
+     -F "targetSrs=EPSG:4326" \
+     http://localhost:3000/convert > output.geojson
+```
+
 **Requirements:**
 - The ZIP must contain at least: `.shp`, `.shx`, and `.dbf` files
+- For multi-file uploads: provide at least `.shp`, `.shx`, and `.dbf` files
 - All files should have the same basename (e.g., `roads.shp`, `roads.shx`, `roads.dbf`)
-- Additional files like `.prj` (projection) are automatically included if present
+- Additional files like `.prj` (projection), `.cpg` (encoding) are automatically used if present
 
 **Multiple Shapefiles in One ZIP:**
 If your ZIP contains multiple shapefiles (e.g., `roads.shp`, `buildings.shp`, `rivers.shp`), they will all be converted and merged into a single GeoJSON FeatureCollection:

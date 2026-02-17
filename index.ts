@@ -1,15 +1,15 @@
-import {serve} from "@hono/node-server"
-import {ErrorHandler, Handler, Hono, NotFoundHandler} from "hono"
-import {bodyLimit} from "hono/body-limit"
-import {cors} from "hono/cors"
-import {BlankEnv, BlankSchema} from "hono/types"
-import {randomBytes} from "node:crypto"
-import {unlink, writeFile} from "node:fs/promises"
-import {tmpdir} from "node:os"
-import {Readable} from "node:stream"
-import {promisify} from "node:util"
-import {exec} from "node:child_process"
-import {ogr2ogr} from "ogr2ogr"
+import { serve } from "@hono/node-server"
+import { ErrorHandler, Handler, Hono, NotFoundHandler } from "hono"
+import { bodyLimit } from "hono/body-limit"
+import { cors } from "hono/cors"
+import { BlankEnv, BlankSchema } from "hono/types"
+import { randomBytes } from "node:crypto"
+import { unlink, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { Readable } from "node:stream"
+import { promisify } from "node:util"
+import { exec } from "node:child_process"
+import { ogr2ogr } from "ogr2ogr"
 import index from "./index.html?raw"
 import { convertHandler } from "./src/convert"
 import { ogrinfoHandler } from "./src/ogrinfo"
@@ -30,7 +30,7 @@ export interface OgreOpts {
 
 export interface UploadOpts {
   targetSrs?: string
-  upload: File
+  upload: File | File[]
   sourceSrs?: string
   rfc7946?: string
   forcePlainText?: string
@@ -158,7 +158,7 @@ export class Ogre {
 
     app.options("/", this.heartbeat())
     app.get("/", this.index())
-    app.use(cors(), bodyLimit({maxSize: this.limit}))
+    app.use(cors(), bodyLimit({ maxSize: this.limit }))
     app.post("/convert", this.convert())
     app.post("/convertJson", this.convertJson())
     app.post("/convertToDwg", this.convertToDwg())
@@ -170,16 +170,16 @@ export class Ogre {
   }
 
   start(): void {
-    serve({fetch: this.app.fetch, port: this.port})
+    serve({ fetch: this.app.fetch, port: this.port })
   }
 
   private notFound = (): NotFoundHandler => (c) => {
-    return c.json({error: "Not found"}, 404)
+    return c.json({ error: "Not found" }, 404)
   }
 
   private serverError = (): ErrorHandler => (er, c) => {
     console.error(er.stack)
-    return c.json({error: true, message: er.message}, 500)
+    return c.json({ error: true, message: er.message }, 500)
   }
 
   private heartbeat = (): Handler => async () => new Response()

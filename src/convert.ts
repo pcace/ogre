@@ -4,7 +4,6 @@ import { mkdir, readdir, rm, unlink, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { ogr2ogr } from "ogr2ogr"
-import type { UploadOpts } from "../index"
 
 const TMP_DIR = tmpdir()
 
@@ -91,23 +90,35 @@ export async function convertHandler(
   c: any,
   opts: { timeout: number; limit: number }
 ) {
-  let {
-    upload,
-    targetSrs,
-    sourceSrs,
-    rfc7946,
-    forcePlainText,
-    forceDownload,
-    callback,
-    dialect,
-    sql,
-    simplify,
-    configDxfEncoding,
-    writeBbox,
-  }: UploadOpts = await c.req.parseBody()
-  if (!upload) {
+  // Parse form data to extract all files with name "upload"
+  const formData = await c.req.formData()
+  const allUploads: File[] = []
+
+  for (const [key, value] of formData.entries()) {
+    if (key === 'upload' && value instanceof File) {
+      allUploads.push(value)
+    }
+  }
+
+  if (allUploads.length === 0) {
     return c.json({ error: true, msg: "No file provided" }, 400)
   }
+
+  // Normalize upload to array for consistent handling
+  const uploads = allUploads
+
+  // Extract other parameters from formData
+  const targetSrs = formData.get('targetSrs') as string | null
+  const sourceSrs = formData.get('sourceSrs') as string | null
+  const rfc7946 = formData.get('rfc7946') as string | null
+  const forcePlainText = formData.get('forcePlainText') as string | null
+  const forceDownload = formData.get('forceDownload') as string | null
+  const callback = formData.get('callback') as string | null
+  const dialect = formData.get('dialect') as string | null
+  const sql = formData.get('sql') as string | null
+  const simplify = formData.get('simplify') as string | null
+  const configDxfEncoding = formData.get('configDxfEncoding') as string | null
+  const writeBbox = formData.get('writeBbox') as string | null
 
   let ogrOpts = {
     timeout: opts.timeout,
@@ -135,83 +146,131 @@ export async function convertHandler(
     c.header("content-disposition", "attachment;")
   }
 
-  let path = TMP_DIR + "/" + randomBytes(16).toString("hex") + sanitizeFilename(upload.name)
+  let path = TMP_DIR + "/" + randomBytes(16).toString("hex") + sanitizeFilename(uploads[0].name)
   let extractPath: string | null = null
-  let body: string
+  let responseBody: string
 
   try {
-    let buf = await upload.arrayBuffer()
-    await writeFile(path, Buffer.from(buf))
-
     let data: any
 
-    // Check if it's a ZIP file (potentially containing shapefile(s))
-    if (isZipFile(upload.name)) {
+    // Case 1: Multiple files uploaded (e.g., shapefile components)
+    if (uploads.length > 1) {
       extractPath = TMP_DIR + "/" + randomBytes(16).toString("hex")
       await mkdir(extractPath, { recursive: true })
 
-      try {
-        // Extract ZIP file
-        const zip = new AdmZip(path)
-        zip.extractAllTo(extractPath, true)
-
-        // Find all shapefiles in the ZIP
-        const { shapefiles, error } = await findAllShapefiles(extractPath)
-
-        if (error) {
-          return c.json({ error: true, msg: error }, 400)
-        }
-
-        if (shapefiles.length === 0) {
-          return c.json({ error: true, msg: "No valid shapefiles found in ZIP" }, 400)
-        }
-
-        // Convert all shapefiles and merge them
-        const geojsons: any[] = []
-
-        for (const shapefile of shapefiles) {
-          try {
-            const result = await ogr2ogr(shapefile.shpPath, ogrOpts)
-            geojsons.push(result.data)
-          } catch (ogrError: any) {
-            console.error(`Error converting ${shapefile.basename}:`, ogrError.message)
-            // Continue with other shapefiles even if one fails
-          }
-        }
-
-        if (geojsons.length === 0) {
-          return c.json({ error: true, msg: "Failed to convert any shapefiles" }, 400)
-        }
-
-        // Merge all GeoJSONs into a single FeatureCollection
-        data = mergeFeatureCollections(geojsons)
-
-      } catch (zipError: any) {
-        return c.json({
-          error: true,
-          msg: "Failed to extract ZIP file: " + zipError.message
-        }, 400)
+      // Write all uploaded files to the temp directory
+      for (const file of uploads) {
+        const filePath = join(extractPath, sanitizeFilename(file.name))
+        const buf = await file.arrayBuffer()
+        await writeFile(filePath, new Uint8Array(buf))
       }
-    } else {
-      // Single file (not ZIP)
-      const result = await ogr2ogr(path, ogrOpts)
-      data = result.data
+
+      // Find all shapefiles in the directory
+      const { shapefiles, error } = await findAllShapefiles(extractPath)
+
+      if (error) {
+        return c.json({ error: true, msg: error }, 400)
+      }
+
+      if (shapefiles.length === 0) {
+        return c.json({ error: true, msg: "No valid shapefiles found in uploaded files" }, 400)
+      }
+
+      // Convert all shapefiles and merge them
+      const geojsons: any[] = []
+
+      for (const shapefile of shapefiles) {
+        try {
+          const result = await ogr2ogr(shapefile.shpPath, ogrOpts)
+          geojsons.push(result.data)
+        } catch (ogrError: any) {
+          console.error(`Error converting ${shapefile.basename}:`, ogrError.message)
+          // Continue with other shapefiles even if one fails
+        }
+      }
+
+      if (geojsons.length === 0) {
+        return c.json({ error: true, msg: "Failed to convert any shapefiles" }, 400)
+      }
+
+      // Merge all GeoJSONs into a single FeatureCollection
+      data = mergeFeatureCollections(geojsons)
+    }
+    // Case 2: Single file - could be ZIP or other format
+    else {
+      let buf = await uploads[0].arrayBuffer()
+      await writeFile(path, new Uint8Array(buf))
+
+      // Check if it's a ZIP file (potentially containing shapefile(s))
+      if (isZipFile(uploads[0].name)) {
+        extractPath = TMP_DIR + "/" + randomBytes(16).toString("hex")
+        await mkdir(extractPath, { recursive: true })
+
+        try {
+          // Extract ZIP file
+          const zip = new AdmZip(path)
+          zip.extractAllTo(extractPath, true)
+
+          // Find all shapefiles in the ZIP
+          const { shapefiles, error } = await findAllShapefiles(extractPath)
+
+          if (error) {
+            return c.json({ error: true, msg: error }, 400)
+          }
+
+          if (shapefiles.length === 0) {
+            return c.json({ error: true, msg: "No valid shapefiles found in ZIP" }, 400)
+          }
+
+          // Convert all shapefiles and merge them
+          const geojsons: any[] = []
+
+          for (const shapefile of shapefiles) {
+            try {
+              const result = await ogr2ogr(shapefile.shpPath, ogrOpts)
+              geojsons.push(result.data)
+            } catch (ogrError: any) {
+              console.error(`Error converting ${shapefile.basename}:`, ogrError.message)
+              // Continue with other shapefiles even if one fails
+            }
+          }
+
+          if (geojsons.length === 0) {
+            return c.json({ error: true, msg: "Failed to convert any shapefiles" }, 400)
+          }
+
+          // Merge all GeoJSONs into a single FeatureCollection
+          data = mergeFeatureCollections(geojsons)
+
+        } catch (zipError: any) {
+          return c.json({
+            error: true,
+            msg: "Failed to extract ZIP file: " + zipError.message
+          }, 400)
+        }
+      } else {
+        // Single file (not ZIP)
+        const result = await ogr2ogr(path, ogrOpts)
+        data = result.data
+      }
     }
 
     if (callback) {
-      body = callback + "(" + JSON.stringify(data) + ")"
+      responseBody = callback + "(" + JSON.stringify(data) + ")"
     } else {
-      body = JSON.stringify(data)
+      responseBody = JSON.stringify(data)
     }
   } finally {
-    // Cleanup uploaded file
-    unlink(path).catch((er) => console.error("unlink error", er.message))
+    // Cleanup uploaded file (only for single file uploads)
+    if (uploads.length === 1) {
+      unlink(path).catch((er) => console.error("unlink error", er.message))
+    }
 
-    // Cleanup extracted files if ZIP was processed
+    // Cleanup extracted files if ZIP was processed or multi-file upload
     if (extractPath) {
       rm(extractPath, { recursive: true, force: true })
         .catch((er) => console.error("cleanup error", er.message))
     }
   }
-  return c.body(body)
+  return c.body(responseBody)
 }
