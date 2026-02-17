@@ -81,6 +81,44 @@ Additional POST parameters for /rasterize:
  where          WHERE clause for filtering
 ```
 
+## Shapefile ZIP Upload
+
+Shapefiles consist of multiple files (.shp, .shx, .dbf, .prj, etc.). You can upload them as a ZIP archive:
+
+```sh
+# Convert a shapefile ZIP to GeoJSON
+curl -F "upload=@myshapefile.zip" \
+     http://localhost:3000/convert > output.geojson
+
+# Convert shapefile ZIP with coordinate system transformation
+curl -F "upload=@myshapefile.zip" \
+     -F "targetSrs=EPSG:4326" \
+     http://localhost:3000/convert > output.geojson
+
+# Convert shapefile ZIP with simplification
+curl -F "upload=@myshapefile.zip" \
+     -F "targetSrs=EPSG:4326" \
+     -F "simplify=0.001" \
+     http://localhost:3000/convert > output.geojson
+```
+
+**Requirements:**
+- The ZIP must contain at least: `.shp`, `.shx`, and `.dbf` files
+- All files should have the same basename (e.g., `roads.shp`, `roads.shx`, `roads.dbf`)
+- Additional files like `.prj` (projection) are automatically included if present
+
+**Multiple Shapefiles in One ZIP:**
+If your ZIP contains multiple shapefiles (e.g., `roads.shp`, `buildings.shp`, `rivers.shp`), they will all be converted and merged into a single GeoJSON FeatureCollection:
+
+```sh
+# Convert ZIP with multiple shapefiles
+curl -F "upload=@multiple_layers.zip" \
+     -F "targetSrs=EPSG:4326" \
+     http://localhost:3000/convert > merged_output.geojson
+```
+
+All features from all shapefiles will be combined into one `FeatureCollection`.
+
 ## Rasterization with gdal_rasterize
 
 To convert GeoJSON or other vector formats to raster images (GeoTIFF or PNG), you can use the rasterize endpoint:

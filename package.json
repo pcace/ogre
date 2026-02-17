@@ -34,12 +34,14 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.1",
+    "adm-zip": "^0.5.16",
     "dxf-writer": "^1.18.4",
     "hono": "^4.7.7",
     "ogr2ogr": "6.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
+    "@types/adm-zip": "^0.5.7",
     "@types/archiver": "^6.0.3",
     "@types/node": "^22.14.1",
     "@types/supertest": "^6.0.3",
