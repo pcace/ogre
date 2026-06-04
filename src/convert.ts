@@ -22,10 +22,14 @@ interface ShapefileInfo {
 
 async function findAllShapefiles(extractPath: string): Promise<{ shapefiles: ShapefileInfo[]; error?: string }> {
   const files = await readdir(extractPath)
-
+  if(files.length === 1 && files[0].split('.').length === 1){
+    const nestedFiles = await readdir(join(extractPath, files[0]))
+    files.push(...nestedFiles.map(f => join(files[0], f)))
+    // remove first entry
+    files.shift()
+  }
   // Find all .shp files
   const shpFiles = files.filter(f => f.toLowerCase().endsWith('.shp'))
-
   if (shpFiles.length === 0) {
     return { shapefiles: [], error: "No .shp file found in ZIP" }
   }
