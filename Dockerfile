@@ -1,8 +1,3 @@
-FROM node:24-slim AS node
-ENV PNPM_HOME="/usr/local/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && mkdir -p $PNPM_HOME
-
 # FROM ghcr.io/osgeo/gdal:alpine-small-3.11.0
 FROM ghcr.io/osgeo/gdal:ubuntu-full-latest
 
@@ -12,7 +7,7 @@ RUN apt-get update && apt-get install -y curl gnupg build-essential autoconf aut
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && \
-    apt-get install -y nodejs && \
+    apt-get install -y nodejs npm && \
     rm -rf /var/lib/apt/lists/*
 
 # # Build and install LibreDWG from source (GitHub since GNU FTP doesn't include bindings)
@@ -67,7 +62,7 @@ RUN apt-get update && apt-get install -y \
 
 # Set up pnpm directly (without corepack)
 ENV PNPM_HOME="/usr/local/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN mkdir -p $PNPM_HOME && \
     npm install -g pnpm
 
