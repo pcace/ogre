@@ -13,7 +13,28 @@ let usage =
   " -p, --port      port number (default 3000)\n" +
   " -v, --version   version number\n" +
   " -t, --timeout   timeout before ogre kills a job in ms (default 15000)\n" +
-  " -l, --limit     byte limit for uploads (default 50000000)\n"
+  " -l, --limit     byte limit for uploads (default 50000000)\n" +
+  "\n" +
+  "\x1b[1mAdditional POST parameters for /convert:\x1b[0m\n" +
+  " dialect        SQL dialect (e.g., 'sqlite')\n" +
+  " sql            SQL query for filtering data\n" +
+  " simplify       Value for simplifying geometries (e.g., '0.1')\n" +
+  " configDxfEncoding  Set to any value to enable DXF_ENCODING=UTF-8 config\n" +
+  " writeBbox      Set to any value to enable WRITE_BBOX=YES\n" +
+  "\n" +
+  "\x1b[1mAdditional POST parameters for /info:\x1b[0m\n" +
+  " upload         File to analyze (required)\n" +
+  " summary        Set to any value to show summary only\n" +
+  " features       Set to any value to show features (default)\n" +
+  " al             Set to any value to list all layers\n" +
+  " where          Attribute query (e.g., 'name=\"test\"')\n" +
+  " sql            SQL query for filtering data\n" +
+  " dialect        SQL dialect (e.g., 'sqlite')\n" +
+  " limit          Limit number of features (e.g., '10')\n" +
+  " spat           Spatial filter 'xmin ymin xmax ymax'\n" +
+  " geomfield      Geometry field name\n" +
+  " fid            Feature ID to show\n" +
+  " layerName      Specific layer name to analyze\n"
 
 let port = 3000
 let timeout = 15000

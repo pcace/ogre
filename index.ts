@@ -1,14 +1,26 @@
-import {serve} from "@hono/node-server"
-import {ErrorHandler, Handler, Hono, NotFoundHandler} from "hono"
-import {bodyLimit} from "hono/body-limit"
-import {cors} from "hono/cors"
-import {BlankEnv, BlankSchema} from "hono/types"
-import {randomBytes} from "node:crypto"
-import {unlink, writeFile} from "node:fs/promises"
-import {tmpdir} from "node:os"
-import {Readable} from "node:stream"
-import {ogr2ogr} from "ogr2ogr"
+import { serve } from "@hono/node-server"
+import { ErrorHandler, Handler, Hono, NotFoundHandler } from "hono"
+import { bodyLimit } from "hono/body-limit"
+import { cors } from "hono/cors"
+import { BlankEnv, BlankSchema } from "hono/types"
+import { randomBytes } from "node:crypto"
+import { unlink, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { Readable } from "node:stream"
+import { promisify } from "node:util"
+import { exec } from "node:child_process"
+import { ogr2ogr } from "ogr2ogr"
 import index from "./index.html?raw"
+import { convertHandler } from "./src/convert"
+import { ogrinfoHandler } from "./src/ogrinfo"
+import { rasterizeHandler } from "./src/rasterize"
+import { translateHandler } from "./src/translate"
+import { infoJsonHandler } from "./src/infoJson"
+import { convertJsonHandler } from "./src/convertJson"
+import { gdalinfoHandler } from "./src/gdalinfo"
+import { convertToDwgHandler } from "./src/convertToDwg"
+
+const execAsync = promisify(exec)
 
 export interface OgreOpts {
   port?: number
@@ -16,18 +28,114 @@ export interface OgreOpts {
   limit?: number
 }
 
-interface UploadOpts {
-  [key: string]: string | File
-  targetSrs: string
+export interface UploadOpts {
+  targetSrs?: string
+  upload: File | File[]
+  sourceSrs?: string
+  rfc7946?: string
+  forcePlainText?: string
+  forceDownload?: string
+  callback?: string
+  dialect?: string
+  sql?: string
+  simplify?: string
+  configDxfEncoding?: string
+  writeBbox?: string
+}
+
+export interface OgrInfoOpts {
+  upload?: File
+  json?: string
+  summary?: string
+  features?: string
+  al?: string
+  where?: string
+  sql?: string
+  dialect?: string
+  limit?: string
+  spat?: string
+  geomfield?: string
+  fid?: string
+  layerName?: string
+}
+
+export interface RasterizeOpts {
+  upload?: File
+  json?: string
+  jsonUrl?: string
+  outputFormat?: string // Only 'GTiff' supported
+  width?: string
+  height?: string
+  xres?: string
+  yres?: string
+  xmin?: string
+  ymin?: string
+  xmax?: string
+  ymax?: string
+  burn?: string
+  attribute?: string
+  nodata?: string
+  init?: string
+  srs?: string
+  allTouched?: string
+  outputType?: string // 'Byte', 'Int16', 'Float32', etc.
+  bands?: string[]
+  layerName?: string
+  sql?: string
+  dialect?: string
+  where?: string
+}
+
+export interface TranslateOpts {
   upload: File
-  sourceSrs: string
-  rfc7946: string
-  forcePlainText: string
-  forceDownload: string
-  callback: string
+  outputFormat?: string // 'JPEG', 'PNG', 'GTiff', etc.
+  outputType?: string // 'Byte', 'Int16', 'Float32', etc.
+  band?: string[] // band selection
+  mask?: string
+  expand?: string // 'gray', 'rgb', 'rgba'
+  outsize?: { width: string; height: string } // output size
+  scale?: { srcMin?: string; srcMax?: string; dstMin?: string; dstMax?: string }
+  srcwin?: { xoff: string; yoff: string; xsize: string; ysize: string }
+  projwin?: { ulx: string; uly: string; lrx: string; lry: string }
+  projwinSrs?: string
+  quality?: string // for JPEG output
+  compress?: string // compression method
+  nodata?: string
+}
+
+export interface ConvertToDwgOpts {
+  upload: File
+  outputName?: string
 }
 
 const TMP_DIR = tmpdir()
+
+// Security functions for input validation and sanitization
+function sanitizeFilename(filename: string): string {
+  // Remove potentially dangerous characters and paths
+  return filename.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^\.+/, '').substring(0, 255)
+}
+
+function validateNumericInput(value: string | undefined, min?: number, max?: number): boolean {
+  if (!value) return true // optional parameters
+  const num = parseFloat(value)
+  if (isNaN(num)) return false
+  if (min !== undefined && num < min) return false
+  if (max !== undefined && num > max) return false
+  return true
+}
+
+function validateStringInput(value: string | undefined, allowedChars?: RegExp): boolean {
+  if (!value) return true // optional parameters
+  if (value.length > 1000) return false // prevent extremely long inputs
+  if (allowedChars && !allowedChars.test(value)) return false
+  return true
+}
+
+function sanitizeCommandArg(arg: string): string {
+  // Remove shell metacharacters to prevent command injection
+  return arg.replace(/[;&|`$(){}[\]<>'"\\]/g, '')
+}
 
 export class Ogre {
   app: Hono<BlankEnv, BlankSchema, "">
@@ -50,22 +158,28 @@ export class Ogre {
 
     app.options("/", this.heartbeat())
     app.get("/", this.index())
-    app.use(cors(), bodyLimit({maxSize: this.limit}))
+    app.use(cors(), bodyLimit({ maxSize: this.limit }))
     app.post("/convert", this.convert())
     app.post("/convertJson", this.convertJson())
+    app.post("/convertToDwg", this.convertToDwg())
+    app.post("/rasterize", this.rasterize())
+    app.post("/translate", this.translate())
+    app.post("/ogrinfo", this.ogrinfo())
+    app.post("/infoJson", this.infoJson())
+    app.post("/gdalinfo", this.gdalinfo())
   }
 
   start(): void {
-    serve({fetch: this.app.fetch, port: this.port})
+    serve({ fetch: this.app.fetch, port: this.port })
   }
 
   private notFound = (): NotFoundHandler => (c) => {
-    return c.json({error: "Not found"}, 404)
+    return c.json({ error: "Not found" }, 404)
   }
 
   private serverError = (): ErrorHandler => (er, c) => {
     console.error(er.stack)
-    return c.json({error: true, message: er.message}, 500)
+    return c.json({ error: true, message: er.message }, 500)
   }
 
   private heartbeat = (): Handler => async () => new Response()
@@ -73,98 +187,34 @@ export class Ogre {
   private index = (): Handler => async (c) => c.html(index)
 
   private convert = (): Handler => async (c) => {
-    let {
-      upload,
-      targetSrs,
-      sourceSrs,
-      rfc7946,
-      forcePlainText,
-      forceDownload,
-      callback,
-    }: UploadOpts = await c.req.parseBody()
-    if (!upload) {
-      return c.json({error: true, msg: "No file provided"}, 400)
-    }
-
-    let opts = {
-      timeout: this.timeout,
-      options: [] as string[],
-      maxBuffer: this.limit * 10,
-    }
-
-    if (targetSrs) opts.options.push("-t_srs", targetSrs)
-    if (sourceSrs) opts.options.push("-s_srs", sourceSrs)
-    if (rfc7946 != null) opts.options.push("-lco", "RFC7946=YES")
-
-    c.header(
-      "content-type",
-      forcePlainText != null
-        ? "text/plain; charset=utf-8"
-        : "application/json; charset=utf-8",
-    )
-
-    if (forceDownload != null) {
-      c.header("content-disposition", "attachment;")
-    }
-
-    let path = TMP_DIR + "/" + randomBytes(16).toString("hex") + upload.name
-    let body: string
-    try {
-      let buf = await upload.arrayBuffer()
-      await writeFile(path, Buffer.from(buf))
-      let {data} = await ogr2ogr(path, opts)
-      if (callback) {
-        body = callback + "(" + JSON.stringify(data) + ")"
-      } else {
-        body = JSON.stringify(data)
-      }
-    } finally {
-      unlink(path).catch((er) => console.error("unlink error", er.message))
-    }
-    return c.body(body)
+    return convertHandler(c, { timeout: this.timeout, limit: this.limit })
   }
 
   private convertJson = (): Handler => async (c) => {
-    let {jsonUrl, json, outputName, format, forceUTF8}: Record<string, string> =
-      await c.req.parseBody()
-    if (!jsonUrl && !json) {
-      return c.json({error: true, msg: "No json provided"}, 400)
-    }
+    return convertJsonHandler(c, { timeout: this.timeout, limit: this.limit })
+  }
 
-    let data
-    if (json) {
-      try {
-        data = JSON.parse(json)
-      } catch (_er) {
-        return c.json({error: true, msg: "Invalid json provided"}, 400)
-      }
-    }
+  private convertToDwg = (): Handler => async (c) => {
+    return convertToDwgHandler(c, { timeout: this.timeout, limit: this.limit })
+  }
 
-    let input = jsonUrl || data
-    let output = outputName || "ogre"
+  private ogrinfo = (): Handler => async (c) => {
+    return ogrinfoHandler(c, { timeout: this.timeout, limit: this.limit })
+  }
 
-    let opts = {
-      format: (format || "ESRI Shapefile").toLowerCase(),
-      timeout: this.timeout,
-      options: [] as string[],
-      maxBuffer: this.limit * 10,
-    }
+  private infoJson = (): Handler => async (c) => {
+    return infoJsonHandler(c, { timeout: this.timeout, limit: this.limit })
+  }
 
-    if (outputName) opts.options.push("-nln", outputName)
-    if (forceUTF8 != null) opts.options.push("-lco", "ENCODING=UTF-8")
+  private rasterize = (): Handler => async (c) => {
+    return rasterizeHandler(c, { timeout: this.timeout, limit: this.limit })
+  }
 
-    let out = await ogr2ogr(input, opts)
-    c.header(
-      "content-disposition",
-      "attachment; filename=" + output + out.extname,
-    )
+  private translate = (): Handler => async (c) => {
+    return translateHandler(c, { timeout: this.timeout, limit: this.limit })
+  }
 
-    if (out.stream) {
-      return c.body(Readable.toWeb(out.stream) as ReadableStream)
-    } else if (out.text) {
-      return c.text(out.text)
-    } else {
-      return c.json(out.data)
-    }
+  private gdalinfo = (): Handler => async (c) => {
+    return gdalinfoHandler(c, { timeout: this.timeout, limit: this.limit })
   }
 }
