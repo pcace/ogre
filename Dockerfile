@@ -1,5 +1,5 @@
 # FROM ghcr.io/osgeo/gdal:alpine-small-3.11.0
-FROM ghcr.io/osgeo/gdal:ubuntu-full-latest
+FROM ghcr.io/osgeo/gdal:ubuntu-full-3.13.1@sha256:aff1d5515aa0e9b50be34ab11d6c0c2cfabc23cdcb7a2e0bc5748101eedb3e4a
 
 # Install Node.js and npm from NodeSource repository, plus build tools for LibreDWG
 RUN apt-get update && apt-get install -y curl gnupg build-essential autoconf automake libtool git texinfo libxkbcommon0 && \
@@ -64,7 +64,7 @@ RUN apt-get update && apt-get install -y \
 ENV PNPM_HOME="/usr/local/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN mkdir -p $PNPM_HOME && \
-    npm install -g pnpm@10.34.1
+    npm install -g pnpm@11.5.2
 
 # Create a restricted user with minimal permissions
 RUN groupadd -r ogre && useradd -r -g ogre -m -s /bin/false ogre && \
@@ -78,17 +78,14 @@ RUN groupadd -r ogre && useradd -r -g ogre -m -s /bin/false ogre && \
 WORKDIR /app
 
 # Copy package files first for better layer caching
-COPY package.json pnpm-lock.yaml ./
+COPY --chown=ogre:ogre package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies as root first
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 RUN pnpm install -g ts-node typescript
 
 # Copy the rest of the application
-COPY . .
-
-# Change ownership of app directory to ogre user
-RUN chown -R ogre:ogre /app
+COPY --chown=ogre:ogre . .
 
 # Remove unnecessary packages and clean up to reduce attack surface
 RUN apt-get remove -y curl gnupg build-essential autoconf automake libtool git && \
@@ -117,7 +114,7 @@ RUN find /usr/bin /usr/sbin -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null
 
 # Add healthcheck using wget (available in the GDAL image)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+  CMD node -e "http=require('http');http.get('http://localhost:3000/',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 EXPOSE 3000
 CMD [ "pnpm", "start" ]
