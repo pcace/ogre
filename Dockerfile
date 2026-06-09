@@ -64,7 +64,7 @@ RUN apt-get update && apt-get install -y \
 ENV PNPM_HOME="/usr/local/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN mkdir -p $PNPM_HOME && \
-    npm install -g pnpm
+    npm install -g pnpm@10.34.1
 
 # Create a restricted user with minimal permissions
 RUN groupadd -r ogre && useradd -r -g ogre -m -s /bin/false ogre && \
