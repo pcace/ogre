@@ -3,6 +3,5 @@ ogr_*
 .DS_Store
 coverage
 dist
-pnpm-lock.yaml
 *.tar
 package-lock.json
