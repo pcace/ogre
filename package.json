@@ -33,37 +33,33 @@
     "clean": true
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.1",
-    "adm-zip": "^0.5.16",
-    "dxf-writer": "^1.18.4",
-    "hono": "^4.7.7",
+    "@hono/node-server": "1.19.14",
+    "adm-zip": "0.5.17",
+    "dxf-writer": "1.18.4",
+    "hono": "4.12.24",
     "ogr2ogr": "6.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.24.0",
-    "@types/adm-zip": "^0.5.7",
-    "@types/archiver": "^6.0.3",
-    "@types/node": "^22.14.1",
-    "@types/supertest": "^6.0.3",
-    "eslint": "^9.24.0",
-    "eslint-config-prettier": "^10.1.2",
-    "eslint-plugin-prettier": "^5.2.6",
-    "prettier": "^3.5.3",
-    "prettier-plugin-organize-imports": "^4.1.0",
-    "supertest": "^7.1.0",
-    "tsup": "^8.4.0",
-    "tsx": "^4.19.3",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.30.1",
-    "vitest": "^3.1.1"
+    "@eslint/js": "9.39.4",
+    "@types/adm-zip": "0.5.8",
+    "@types/archiver": "6.0.4",
+    "@types/node": "22.19.20",
+    "@types/supertest": "6.0.3",
+    "eslint": "9.39.4",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.6",
+    "prettier": "3.8.3",
+    "prettier-plugin-organize-imports": "4.3.0",
+    "supertest": "7.2.2",
+    "tsup": "8.5.1",
+    "tsx": "4.22.4",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.60.0",
+    "vitest": "3.2.6",
+    "esbuild": "0.28.0"
   },
   "engines": {
     "node": ">=18"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
-  },
-  "packageManager": "pnpm@8.15.1+sha1.8adba2d20330c02d3856e18c4eb3819d1d3ca6aa"
+  "packageManager": "pnpm@11.5.2"
 }

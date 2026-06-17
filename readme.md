@@ -12,6 +12,21 @@ Ogre is a web frontend and API for the [ogr2ogr][2] module. See a [live demo her
 npm install -g ogre
 ```
 
+## Test docker
+
+build in repo:
+`docker build -t ogre-test .`
+run:
+`docker run -d --name ogre-test --rm -p 3000:3000 ogre-test`
+stop docker:
+`docker stop ogre-test`
+
+## Caprover Deploy
+
+`git clone -b YOURBRANCH https://github.com/YOUR_OGRE_FORK/ogre`
+`tar cf ogre.tar ogre`
+Use deployment method 2: Tarball
+
 ## Usage
 
 To run the app:
