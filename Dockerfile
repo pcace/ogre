@@ -22,11 +22,10 @@ RUN apt-get update && apt-get install -y curl gnupg build-essential autoconf aut
 #     cd / && \
 #     rm -rf /tmp/libredwg
 
-# Install ODA File Converter
-RUN cd /tmp && \
-    curl -L "https://www.opendesign.com/guestfiles/get?filename=ODAFileConverter_QT6_lnxX64_8.3dll_26.4.deb" -o ODAFileConverter.deb && \
-    dpkg -i ODAFileConverter.deb || apt-get install -f -y && \
-    rm -f ODAFileConverter.deb
+# Install ODA File Converter — copy from repo to avoid broken download links
+COPY ODAFileConverter_QT6_lnxX64_8.3dll_27.1.deb /tmp/ODAFileConverter.deb
+RUN dpkg -i /tmp/ODAFileConverter.deb || apt-get install -f -y && \
+    rm -f /tmp/ODAFileConverter.deb
 
 # Install Qt/X11 dependencies for ODAFileConverter
 RUN apt-get update && apt-get install -y \
